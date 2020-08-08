@@ -22,15 +22,34 @@
 #define PIXEL_B (data[(y*w*n)+(x*n)+2])
 #define PIXEL_A (data[(y*w*n)+(x*n)+3])
 
+/*
+ * ANSI-defined color escape sequences
+ */
+#define RED     "\x1b[31m"
+#define GREEN   "\x1b[32m"
+#define YELLOW  "\x1b[33m"
+#define BLUE    "\x1b[34m"
+#define MAGENTA "\x1b[35m"
+#define CYAN    "\x1b[36m"
+#define RESET   "\x1b[0m"
+
+/*
+ * Output messages to avoid redundancy
+ */
+#define ERR_READ RED "Failed to open file " MAGENTA "\"%s\"" RED " for reading.\n" RESET
+#define ERR_WRITE RED "Failed to open file " MAGENTA "\"%s\"" RED " for writing.\n" RESET
+#define SUCCESS_OUT GREEN "Successfully wrote output file " MAGENTA "\"%s\"" GREEN ".\n" RESET
+
 int main(int argc, char **argv){
   int x, y,
       w, h,
-      n, i;
+      n, i,
+      j;
   FILE *fp;
 
 usage:;
   if(argc < 2){
-    printf("\x1b[36mUsage: find_x [mode]\n\x1b[33mWhere mode is one of:\n \x1b[35mencode\n decode\n diff\n\x1b[0m");
+    printf(CYAN "Usage: find_x [mode]\n" YELLOW "Where mode is one of:\n " MAGENTA "encode\n decode\n diff\n" RESET);
     return 0;
   }
 
@@ -39,15 +58,28 @@ usage:;
 
     data = stbi_load(argv[2], &w, &h, &n, 0);
     if(data == NULL){
-      printf("\x1b[31mFailed to open file \x1b[35m\"%s\"\x1b[31m for reading.\n\x1b[0m", argv[2]);
+      printf(ERR_READ, argv[2]);
       return 1;
     }
-    
-    puts("\x1b[34mInput data to be encoded:\x1b[0m");
-    temp = malloc(w*h);
-    input = malloc(w*h);
-    fgets(temp, w*h, stdin);
-    sprintf(input, " %s", temp);
+   
+    if(argv[3] == NULL){
+      puts(BLUE "Input data to be encoded:" RESET);
+      temp = malloc(w*h);
+      input = malloc(w*h);
+      fgets(temp, w*h, stdin);
+      sprintf(input, " %s", temp);
+    } else {
+      fp = fopen(argv[3], "rb");
+      if(fp == NULL){
+        printf(ERR_READ, argv[3]);
+      }
+      fseek(fp, 0, SEEK_END);
+      j = ftell(fp);
+      input = malloc(j);
+      fseek(fp, 0, SEEK_SET);
+      fread(input, j, 1, fp);
+      fclose(fp);
+    }
 
     i = 0;
     for(y=0;y<h;y++){
@@ -79,7 +111,7 @@ usage:;
 end_encode:;
     stbi_write_png("output.png", w, h, n, data, w*n);
 
-    printf("\x1b[32mSuccessfully wrote output file \x1b[35m\"output.png\"\x1b[32m.\n\x1b[0m");
+    printf(SUCCESS_OUT, "output.png");
 
     free(data);
     free(temp);
@@ -89,7 +121,7 @@ end_encode:;
 
     data = stbi_load(argv[2], &w, &h, &n, 0);
     if(data == NULL){
-      printf("\x1b[31mFailed to open file \x1b[35m\"%s\"\x1b[31m for reading.\n\x1b[0m", argv[2]);
+      printf(ERR_READ, argv[2]);
       return 1;
     }
     
@@ -128,11 +160,11 @@ end_decode:;
     } else {
       fp = fopen(argv[3], "w");
       if(fp == NULL){
-        printf("\x1b[31mFailed to open file \x1b[35m\"%s\"\x1b[31m for reading.\n\x1b[0m", argv[3]);
+        printf(ERR_WRITE, argv[3]);
       }
       fwrite(output, i, 1, fp);
       fclose(fp);
-      printf("\x1b[32mSuccessfully wrote output file \x1b[35m\"%s\"\x1b[32m.\n\x1b[0m", argv[3]);
+      printf(SUCCESS_OUT, argv[3]);
     }
 
     free(data);
@@ -142,13 +174,13 @@ end_decode:;
 
     inp = stbi_load(argv[2], &w, &h, &n, 0);
     if(inp == NULL){
-      printf("\x1b[31mFailed to open file \x1b[35m\"%s\"\x1b[31m for reading.\n\x1b[0m", argv[2]);
+      printf(ERR_READ, argv[2]);
       return 1;
     }
 
     out = stbi_load(argv[3], &w, &h, &n, 0);
     if(out == NULL){
-      printf("\x1b[31mFailed to open file \x1b[35m\"%s\"\x1b[31m for reading.\n\x1b[0m", argv[3]);
+      printf(ERR_READ, argv[3]);
       return 1;
     }
 
@@ -167,7 +199,7 @@ end_decode:;
 
     stbi_write_png("diff.png", w, h, n, out, w*n);
 
-    printf("\x1b[32mSuccessfully wrote output file \x1b[35m\"diff.png\"\x1b[32m.\n\x1b[0m");
+    printf(SUCCESS_OUT, "diff.png");
   } else {
     argc = 0;
     goto usage;

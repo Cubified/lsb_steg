@@ -32,7 +32,7 @@ Diff (cropped and amplified, still somewhat faint due to most bits being 0):
 `lsb_steg` has no dependencies other than the included [stb_image libraries](https://github.com/nothings/stb), meaning it can be compiled and run with:
 
      $ make
-     $ ./find_x encode input.png
+     $ ./find_x encode input.png [optional input filename]
      $ ./find_x decode output.png [optional output filename]
 
 Additionally, `find_x` contains a `diff` mode, capable of amplifying and writing the difference between original and modified images:
@@ -42,6 +42,11 @@ Additionally, `find_x` contains a `diff` mode, capable of amplifying and writing
 ### Drawbacks
 
 This implementation currently only supports 4-channel, 8-bit PNG files, as two bits of each data byte are stored within each channel, and the modifications made are somewhat glaring when the original image is known.  This being said, it is a functional implementation and proof-of-concept.
+
+### To-Do
+
+- Consolidate logic (reading/writing code use many similar yet slightly different one-liners)
+- Improve error messages
 
 ### Further Reading (/Watching)
 
